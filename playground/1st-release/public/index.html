@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Meu Primeiro Jogo Multiplayer</title>
+
+    <style>
+      #screen {
+        border: 1px solid #ccc;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        image-rendering: --moz-crisp-edges;
+        width: 400px;
+        height: 400px;
+      }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <canvas id="screen" width="10" height="10"></canvas>
+
+    <script type="module">
+      import createKeyboardListener from "./keyboard-listener.js";
+      import createGame from "./game.js";
+      import renderScreen from "./render-screen.js";
+
+      const game = createGame();
+      const keyboardListener = createKeyboardListener(document);
+      keyboardListener.subscribe(game.movePlayer);
+
+      const screen = document.getElementById("screen");
+      renderScreen(screen, game, requestAnimationFrame);
+
+      const socket = io();
+
+      socket.on("connect", () => {
+        const playerId = socket.id;
+      });
+
+      socket.on("setup", (state) => {
+        game.setState(state);
+
+        keyboardListener.registerPlayerId(socket.id);
+        keyboardListener.subscribe(game.movePlayer);
+      });
+
+      socket.on("add-player", (command) => {
+        game.addPlayer(command);
+      });
+
+      socket.on("remove-player", ({ playerId }) => {
+        game.removePlayer({ playerId });
+      });
+    </script>
+  </body>
+</html>
